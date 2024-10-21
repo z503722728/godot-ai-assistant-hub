@@ -1,4 +1,5 @@
-**Godot AI Assistant Hub 🤖**
+**Godot AI Assistant Hub**
+<img src="https://github.com/FlamxGames/godot-ai-assistant-hub/blob/main/logo.png" width="50px">
 ==========================
 
 A Flexible Godot Plugin for AI Assistants
