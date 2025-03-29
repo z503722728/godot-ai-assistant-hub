@@ -14,11 +14,16 @@ const NEW_AI_ASSISTANT_BUTTON = preload("res://addons/ai_assistant_hub/new_ai_as
 @onready var no_assistants_guide: Label = %NoAssistantsGuide
 @onready var assistant_types_container: HFlowContainer = %AssistantTypesContainer
 @onready var tab_container: TabContainer = %TabContainer
+@onready var llm_provider_option: OptionButton = %LLMProviderOption
+@onready var url_label: Label = %UrlLabel
+@onready var openrouter_key_container: HBoxContainer = %OpenRouterKeyContainer
+@onready var openrouter_api_key: LineEdit = %OpenRouterAPIKey
 
 var _plugin:EditorPlugin
 var _tab_bar:TabBar
 var _model_names:Array[String] = []
 var _models_llm: LLMInterface
+var _current_provider_id: String = ""
 
 
 func _tab_changed(tab_index: int) -> void:
@@ -41,6 +46,16 @@ func initialize(plugin:EditorPlugin) -> void:
 	await ready
 	url_txt.text = ProjectSettings.get_setting(AIHubPlugin.CONFIG_BASE_URL)
 	api_class_txt.text = ProjectSettings.get_setting(AIHubPlugin.CONFIG_LLM_API)
+	_current_provider_id = api_class_txt.text
+	
+	# Load OpenRouter API key
+	if _current_provider_id == "openrouter_api":
+		_load_openrouter_api_key()
+	elif ProjectSettings.has_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY):
+		openrouter_api_key.text = ProjectSettings.get_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY)
+	
+	# Initialize LLM provider dropdown
+	_initialize_llm_provider_options()
 	
 	_on_assistants_refresh_btn_pressed()
 	_on_refresh_models_btn_pressed()
@@ -50,9 +65,52 @@ func initialize(plugin:EditorPlugin) -> void:
 	_tab_bar.tab_close_pressed.connect(_close_tab)
 
 
+# Initialize LLM provider options
+func _initialize_llm_provider_options() -> void:
+	llm_provider_option.clear()
+	var providers = _plugin.get_available_llm_providers()
+	
+	for i in range(providers.size()):
+		var provider = providers[i]
+		llm_provider_option.add_item(provider.name)
+		llm_provider_option.set_item_metadata(i, provider.id)
+		
+		# Select currently used provider
+		if provider.id == _current_provider_id:
+			llm_provider_option.select(i)
+	
+	# Update UI state
+	_update_provider_ui()
+
+
+# Update UI based on current provider selection
+func _update_provider_ui() -> void:
+	var provider_id = _current_provider_id
+	
+	# Ollama needs URL, OpenRouter needs API key
+	if provider_id == "ollama_api":
+		url_label.text = "Server URL"
+		url_txt.placeholder_text = "Example: http://127.0.0.1:11434"
+		url_txt.tooltip_text = "URL of the host running the LLM.\n\nDefault value uses Ollama's default port."
+		url_txt.visible = true
+		openrouter_key_container.visible = false
+	elif provider_id == "openrouter_api":
+		url_label.text = "OpenRouter Settings"
+		url_txt.visible = false
+		openrouter_key_container.visible = true
+	else:
+		url_label.text = "Server URL"
+		url_txt.visible = true
+		openrouter_key_container.visible = false
+
+
 func _on_settings_changed(_x) -> void:
 	ProjectSettings.set_setting(AIHubPlugin.CONFIG_BASE_URL, url_txt.text)
 	ProjectSettings.set_setting(AIHubPlugin.CONFIG_LLM_API, api_class_txt.text)
+	
+	# Save OpenRouter API key
+	if _current_provider_id == "openrouter_api":
+		ProjectSettings.set_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY, openrouter_api_key.text)
 
 
 func _on_refresh_models_btn_pressed() -> void:
@@ -60,7 +118,7 @@ func _on_refresh_models_btn_pressed() -> void:
 	_models_llm.send_get_models_request(models_http_request)
 
 
-func _on_models_http_request_completed(result: HTTPRequest.Result, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_models_http_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
 	if result == 0:
 		var models_returned: Array = _models_llm.read_models_response(body)
 		if models_returned.size() == 0:
@@ -134,3 +192,38 @@ func _on_api_load_btn_pressed() -> void:
 		return
 	_models_llm = new_llm
 	new_api_loaded.emit()
+
+
+# Called when LLM provider option changes
+func _on_llm_provider_option_item_selected(index: int) -> void:
+	var provider_id = llm_provider_option.get_item_metadata(index)
+	if _current_provider_id != provider_id:
+		_current_provider_id = provider_id
+		api_class_txt.text = provider_id
+		ProjectSettings.set_setting(AIHubPlugin.CONFIG_LLM_API, provider_id)
+		
+		# Load API key for OpenRouter if we're switching to it
+		if provider_id == "openrouter_api":
+			_load_openrouter_api_key()
+			
+		_update_provider_ui()
+		_on_api_load_btn_pressed()
+
+
+# Load OpenRouter API key from the API class
+func _load_openrouter_api_key() -> void:
+	var openrouter_api = load("res://addons/ai_assistant_hub/llm_apis/openrouter_api.gd").new()
+	var api_key = openrouter_api._get_api_key()
+	if not api_key.is_empty():
+		openrouter_api_key.text = api_key
+
+
+# Called when OpenRouter API key changes
+func _on_openrouter_api_key_text_changed(new_text: String) -> void:
+	# Save to ProjectSettings for backward compatibility
+	ProjectSettings.set_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY, new_text)
+	
+	# Save to file using the OpenRouter API class
+	if _current_provider_id == "openrouter_api":
+		var openrouter_api = load("res://addons/ai_assistant_hub/llm_apis/openrouter_api.gd").new()
+		openrouter_api.save_api_key(new_text)
