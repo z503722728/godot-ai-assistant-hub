@@ -21,7 +21,10 @@ const CHAT_HISTORY_EDITOR = preload("res://addons/ai_assistant_hub/chat_history_
 @onready var temperature_slider: HSlider = %TemperatureSlider
 @onready var temperature_override_checkbox: CheckBox = %TemperatureOverrideCheckbox
 @onready var temperature_slider_container: HBoxContainer = %TemperatureSliderContainer
+@onready var auto_scroll_check_box: CheckBox = %AutoScrollCheckBox
 
+# Switch to control auto-scrolling to the bottom of conversation (only affects AI replies)
+@onready var auto_scroll_to_bottom: bool=%AutoScrollCheckBox.button_pressed
 
 var _plugin:EditorPlugin
 var _bot_name: String
@@ -32,6 +35,35 @@ var _bot_answer_handler: AIAnswerHandler
 var _llm: LLMInterface
 var _conversation: AIConversation
 
+# Set whether to auto-scroll to the bottom of conversation (only affects AI replies)
+func set_auto_scroll_to_bottom(enable: bool) -> void:
+	auto_scroll_to_bottom = enable
+	# Don't immediately change the scroll_following property, but decide based on sender when adding messages
+	if output_window == null:
+		return
+
+# Get the current auto-scroll status
+func get_auto_scroll_to_bottom() -> bool:
+	return auto_scroll_to_bottom
+
+# Scroll the output window by one page
+func _scroll_output_by_page() -> void:
+	if output_window == null:
+		return
+	
+	# Get the vertical scrollbar of the output window
+	var v_scroll_bar := output_window.get_v_scroll_bar()
+	if v_scroll_bar == null:
+		return
+	
+	# Get the visible height of the output window (one page height)
+	var visible_height = output_window.size.y
+	
+	# Calculate new position by adding one page height, but don't exceed maximum value
+	var new_value = min(v_scroll_bar.value + visible_height, v_scroll_bar.max_value)
+	
+	# Set the new scroll position
+	v_scroll_bar.value = new_value
 
 func initialize(plugin:EditorPlugin, assistant_settings: AIAssistantResource, bot_name:String) -> void:
 	_plugin = plugin
@@ -51,6 +83,11 @@ func initialize(plugin:EditorPlugin, assistant_settings: AIAssistantResource, bo
 		temperature_slider.value = assistant_settings.custom_temperature
 		temperature_override_checkbox.button_pressed = assistant_settings.use_custom_temperature
 		_on_temperature_override_checkbox_toggled(temperature_override_checkbox.button_pressed)
+		
+		# Read auto-scroll settings from the scene
+		if auto_scroll_check_box:
+			auto_scroll_to_bottom = auto_scroll_check_box.button_pressed
+			set_auto_scroll_to_bottom(auto_scroll_to_bottom)
 	
 		bot_portrait.set_random()
 		reply_sound.pitch_scale = randf_range(0.7, 1.2)
@@ -175,6 +212,14 @@ func _on_http_request_completed(result: int, response_code: int, headers: Packed
 
 
 func _add_to_chat(text:String, caller:Caller) -> void:
+	# Set auto-scroll based on message sender
+	if caller == Caller.You or caller == Caller.System:
+		# User and system messages always auto-scroll
+		output_window.scroll_following = true
+	else:  # Caller.Bot
+		# AI replies depend on the auto-scroll switch
+		output_window.scroll_following = auto_scroll_to_bottom
+	
 	var prefix:String
 	var suffix:String
 	match caller:
@@ -196,7 +241,19 @@ func _add_to_chat(text:String, caller:Caller) -> void:
 		Caller.System:
 			prefix = "\n[center][color=FF7700][ "
 			suffix = " ][/color][/center]\n"
+	
+	# Save current text length to calculate how much new content was added
+	var prev_text_length = output_window.text.length()
+	
+	# Add new content
 	output_window.text += "%s%s%s" % [prefix, text, suffix]
+	
+	# If this is an AI reply and auto-scroll is disabled, scroll one page
+	if caller == Caller.Bot and not auto_scroll_to_bottom:
+		# Make sure the interface updates first so the scrollbar is properly calculated
+		await get_tree().process_frame
+		await get_tree().process_frame  # Wait two frames to ensure text and scrollbar are updated
+		_scroll_output_by_page()
 
 
 func _on_edit_history_pressed() -> void:
@@ -204,6 +261,11 @@ func _on_edit_history_pressed() -> void:
 	history_editor.initialize(_conversation)
 	add_child(history_editor)
 	history_editor.popup()
+
+
+func _on_auto_scroll_check_box_toggled(toggled_on: bool) -> void:
+	set_auto_scroll_to_bottom(toggled_on)
+	# Don't immediately change scrolling behavior, but apply on next AI reply
 
 
 func _on_temperature_override_checkbox_toggled(toggled_on: bool) -> void:
