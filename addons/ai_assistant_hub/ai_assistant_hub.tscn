@@ -238,6 +238,7 @@ size_flags_horizontal = 8
 tooltip_text = "If you like this plugin, see how you can support it."
 text = "♥"
 underline = 2
+uri = "https://github.com/FlamxGames/godot-ai-assistant-hub/blob/main/support.md"
 
 [connection signal="request_completed" from="ModelsHTTPRequest" to="." method="_on_models_http_request_completed"]
 [connection signal="pressed" from="VBoxContainer/TabContainer/AI Hub/VBoxContainer/HBoxContainer/AssistantsRefreshBtn" to="." method="_on_assistants_refresh_btn_pressed"]
