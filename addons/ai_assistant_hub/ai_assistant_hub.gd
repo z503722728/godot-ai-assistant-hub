@@ -111,6 +111,7 @@ func _on_settings_changed(_x) -> void:
 	# Save OpenRouter API key
 	if _current_provider_id == "openrouter_api":
 		ProjectSettings.set_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY, openrouter_api_key.text)
+	ProjectSettings.save()
 
 
 func _on_refresh_models_btn_pressed() -> void:
@@ -227,3 +228,4 @@ func _on_openrouter_api_key_text_changed(new_text: String) -> void:
 	if _current_provider_id == "openrouter_api":
 		var openrouter_api = load("res://addons/ai_assistant_hub/llm_apis/openrouter_api.gd").new()
 		openrouter_api.save_api_key(new_text)
+	ProjectSettings.save()

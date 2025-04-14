@@ -147,7 +147,6 @@ size_flags_horizontal = 3
 tooltip_text = "Select the LLM provider to use"
 selected = 0
 item_count = 2
-popup/item_0/id = 0
 popup/item_1/id = 1
 
 [node name="UrlLabel" type="Label" parent="VBoxContainer/TabContainer/AI Hub/VBoxContainer/GridContainer"]
@@ -229,7 +228,7 @@ layout_mode = 2
 
 [node name="VersionLabel" type="Label" parent="VBoxContainer/TabContainer/AI Hub/VBoxContainer/GridContainer/AdvancedSettings/HBoxContainer"]
 layout_mode = 2
-text = "v1.0.0"
+text = "v1.1.0"
 horizontal_alignment = 2
 
 [node name="SupportBtn" type="LinkButton" parent="VBoxContainer/TabContainer/AI Hub/VBoxContainer/GridContainer/AdvancedSettings/HBoxContainer"]
