@@ -90,5 +90,13 @@ func get_available_llm_providers() -> Array[Dictionary]:
 		"name": "OpenRouter",
 		"description": "Unified interface to access various commercial LLMs (requires API key)"
 	})
+
+	# Add Jan.IA provider
+	providers.append({
+		"id":"jan_api",
+		"name":"Jan",
+		"description":"Locally run open source LLMs models (requires Jan’s OpenAI‑compatible server)"
+	})
+
 	
 	return providers
