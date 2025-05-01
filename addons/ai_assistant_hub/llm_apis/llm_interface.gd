@@ -11,10 +11,18 @@ var override_temperature: bool
 var temperature: float
 
 
-func get_full_response(body:PackedByteArray) -> Dictionary:
+func get_full_response(body: PackedByteArray) -> Dictionary:
 	var json := JSON.new()
-	json.parse(body.get_string_from_utf8())
-	return json.get_data()
+	var parse_result := json.parse(body.get_string_from_utf8())
+	if parse_result != OK:
+		push_error("Failed to parse JSON in get_full_response: %s" % json.get_error_message())
+		return {}
+	var data = json.get_data()
+	if typeof(data) == TYPE_DICTIONARY:
+		return data
+	else:
+		push_error("Parsed JSON is not a Dictionary in get_full_response.")
+		return {}
 
 
 ## All methods below should be overriden by child classes, see for example OllamaAPI
