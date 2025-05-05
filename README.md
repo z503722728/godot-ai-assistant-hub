@@ -14,7 +14,7 @@ If you use ChatGPT, Gemini, or similar tools with a REST API, you could easily e
 [Click here to go to the tutorial playlist](https://www.youtube.com/playlist?list=PL2PLLTlAI2ogvgcY8mG-QsMI1dDUDPyF2)
 
 Thanks to contributors, additionally to Ollama, the following APIs are already supported:
-* Gemini
+* Google Gemini
 * OpenRouter
 * Jan
 
@@ -38,7 +38,10 @@ First Video 👇
 
 It depends on the models you use and the speed you expect. Of course, if you extend the plugin to run hosted models (ChatGPT, Gemini, etc.), then you don't need to worry about this (just about the bills).
 
-**Tested in Godot 4.3.**
+**Tested in versions**
+
+* Godot 4.4
+* Godot 4.3
 
 If you test it in other versions, let me know in the discussions section so I can add it here.
 
