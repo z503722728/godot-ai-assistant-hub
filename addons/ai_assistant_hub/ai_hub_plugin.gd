@@ -2,8 +2,8 @@
 class_name AIHubPlugin
 extends EditorPlugin
 
-const CONFIG_BASE_URL:= "ai_assistant_hub/base_url"
-const CONFIG_LLM_API:= "ai_assistant_hub/llm_api"
+const CONFIG_BASE_URL:= "plugins/ai_assistant_hub/base_url"
+const CONFIG_LLM_API:= "plugins/ai_assistant_hub/llm_api"
 const CONFIG_OPENROUTER_API_KEY := "plugins/ai_assistant_hub/openrouter_api_key"
 const CONFIG_GEMINI_API_KEY := "plugins/ai_assistant_hub/gemini_api_key"
 
@@ -11,9 +11,28 @@ var _hub_dock:AIAssistantHub
 
 func _enter_tree() -> void:
 	if ProjectSettings.get_setting(CONFIG_BASE_URL, "").is_empty():
-		ProjectSettings.set_setting(CONFIG_BASE_URL, "http://127.0.0.1:11434")
+		# In the future we can consider moving this back to simply:
+		# ProjectSettings.set_setting(CONFIG_BASE_URL, "http://127.0.0.1:11434")
+		# the code below handles migrating the config from 1.2.0 to 1.3.0
+		var old_path:= "ai_assistant_hub/base_url"
+		if ProjectSettings.has_setting(old_path):
+			ProjectSettings.set_setting(CONFIG_BASE_URL, ProjectSettings.get_setting(old_path))
+			ProjectSettings.set_setting(old_path, null)
+			ProjectSettings.save()
+		else:
+			ProjectSettings.set_setting(CONFIG_BASE_URL, "http://127.0.0.1:11434")
+			
 	if ProjectSettings.get_setting(CONFIG_LLM_API, "").is_empty():
-		ProjectSettings.set_setting(CONFIG_LLM_API, "ollama_api")
+		# In the future we can consider moving this back to simply:
+		# ProjectSettings.set_setting(CONFIG_LLM_API, "ollama_api")
+		# the code below handles migrating the config from 1.2.0 to 1.3.0
+		var old_path:= "ai_assistant_hub/llm_api"
+		if ProjectSettings.has_setting(old_path):
+			ProjectSettings.set_setting(CONFIG_LLM_API, ProjectSettings.get_setting(old_path))
+			ProjectSettings.set_setting(old_path, null)
+			ProjectSettings.save()
+		else:
+			ProjectSettings.set_setting(CONFIG_LLM_API, "ollama_api")
 	
 	# Setup OpenRouter API key (will be loaded from file if it exists)
 	_init_openrouter_api_key()
