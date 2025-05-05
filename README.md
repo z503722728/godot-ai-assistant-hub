@@ -13,6 +13,10 @@ If you use ChatGPT, Gemini, or similar tools with a REST API, you could easily e
 
 [Click here to go to the tutorial playlist](https://www.youtube.com/playlist?list=PL2PLLTlAI2ogvgcY8mG-QsMI1dDUDPyF2)
 
+Thanks to contributors, additionally to Ollama, the following APIs are already supported:
+* OpenRouter
+* Jan
+
 First Video 👇
 
 [![YouTube Video](http://i.ytimg.com/vi/3PDKJYp-upU/hqdefault.jpg)](https://www.youtube.com/watch?v=3PDKJYp-upU&list=PL2PLLTlAI2ogvgcY8mG-QsMI1dDUDPyF2&index=1)

@@ -103,9 +103,12 @@ func initialize(plugin:EditorPlugin, assistant_settings: AIAssistantResource, bo
 
 func load_api() -> void:
 	_llm = _plugin.new_llm_provider()
-	_llm.model = _assistant_settings.ai_model
-	_llm.override_temperature = _assistant_settings.use_custom_temperature
-	_llm.temperature = _assistant_settings.custom_temperature
+	if _llm:
+		_llm.model = _assistant_settings.ai_model
+		_llm.override_temperature = _assistant_settings.use_custom_temperature
+		_llm.temperature = _assistant_settings.custom_temperature
+	else:
+		push_error("LLM provider failed to initialize. Check the plugin's LLM provider configuration in Project Settings.")
 
 
 func greet() -> void:
@@ -179,6 +182,10 @@ func _submit_prompt(prompt:String, quick_prompt:AIQuickPromptResource = null) ->
 	_last_quick_prompt = quick_prompt
 	bot_portrait.is_thinking = true
 	_conversation.add_user_prompt(prompt)
+	if not _llm:
+		push_error("No LLM provider loaded. Check your Project Settings!")
+		_add_to_chat("No language model provider loaded. Check configuration!", Caller.System)
+		return
 	var success := _llm.send_chat_request(http_request, _conversation.build())
 	if not success:
 		_add_to_chat("Something went wrong. Review the details in Godot's Output tab.", Caller.System)
