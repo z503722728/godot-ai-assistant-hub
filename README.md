@@ -86,13 +86,13 @@ Experiment and build the right type of assistants for your workflow.
 
 ### Not sure what models to use?
 
-Some popular models that work fine in low-end computers at the time I wrote this are:
+Some popular models that work fine in low-end computers at the time I wrote this (Oct 2024) are:
 * **llama3.2:** Fast and efficient, but may have occasional accuracy issues.
 * **granite-code:** Ideal for coding on lower-end machines.
 * **mistral:** Excellent for writing tasks.
 * **deepseek-coder-v2:** Powerful coding model (requires at least 8GB of VRAM).
 
-⚠️ If you don't agree with these suggestions, leave a comment in the Discussions page with your suggestions.
+⚠️ If you don't agree with these suggestions or have an updated list of recommendations, leave a comment in the Discussions page with your suggestions.
 
 If you have a powerful PC, just keep increasing the level of the model. You will see many models have versions like 1.5B, 3B, 7B, 30B, 77B, these mean billions of parameters. You can consider 1.5B for very low-end machines, and 77B for very powerful ones. If you are not sure, just try them out, they are easy to delete as well.
 
