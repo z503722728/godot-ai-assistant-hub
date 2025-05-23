@@ -6,8 +6,10 @@ const CONFIG_BASE_URL:= "plugins/ai_assistant_hub/base_url"
 const CONFIG_LLM_API:= "plugins/ai_assistant_hub/llm_api"
 const CONFIG_OPENROUTER_API_KEY := "plugins/ai_assistant_hub/openrouter_api_key"
 const CONFIG_GEMINI_API_KEY := "plugins/ai_assistant_hub/gemini_api_key"
+const CONFIG_CUSTOM_API_KEY := "plugins/ai_assistant_hub/custom_api_key"
+const CONFIG_CUSTOM_BASE_URL := "plugins/ai_assistant_hub/custom_base_url"
 
-var _hub_dock:AIAssistantHub
+var _hub_dock: AIAssistantHub
 
 func _enter_tree() -> void:
 	if ProjectSettings.get_setting(CONFIG_BASE_URL, "").is_empty():
@@ -40,7 +42,10 @@ func _enter_tree() -> void:
 	# Setup Gemini API key (will be loaded from file if it exists)
 	_init_gemini_api_key()
 	
-	_hub_dock = load("res://addons/ai_assistant_hub/ai_assistant_hub.tscn").instantiate()
+	# Setup Custom API key and base URL (will be loaded from file if it exists)
+	_init_custom_api()
+	
+	_hub_dock = load("res://addons/ai_assistant_hub/ai_assistant_hub.tscn").instantiate() as AIAssistantHub
 	_hub_dock.initialize(self)
 	add_control_to_bottom_panel(_hub_dock, "AI Hub")
 	#add_control_to_dock(EditorPlugin.DOCK_SLOT_LEFT_UL, _hub_dock)
@@ -67,7 +72,7 @@ func _init_openrouter_api_key() -> void:
 	_add_project_setting(CONFIG_OPENROUTER_API_KEY, api_key, TYPE_STRING, PROPERTY_HINT_NONE, 
 		"OpenRouter API key - Get it from https://openrouter.ai/keys")
 
-		# Initialize Gemini API key settings
+# Initialize Gemini API key settings
 func _init_gemini_api_key() -> void:
 	# First check if we have a key from the file
 	var gemini_api = load("res://addons/ai_assistant_hub/llm_apis/gemini_api.gd").new()
@@ -85,8 +90,43 @@ func _init_gemini_api_key() -> void:
 		# If we found a key in file, update ProjectSettings
 		ProjectSettings.set_setting(CONFIG_GEMINI_API_KEY, api_key)
 	
-		# Add setting if it doesn't exist
+	# Add setting if it doesn't exist
 	_add_project_setting(CONFIG_GEMINI_API_KEY, api_key, TYPE_STRING, PROPERTY_HINT_NONE, "Gemini API key - Get it from https://aistudio.google.com/app/apikey")
+
+# Initialize Custom API settings
+func _init_custom_api() -> void:
+	# First check if we have a key from the file
+	var custom_api = load("res://addons/ai_assistant_hub/llm_apis/custom_api.gd").new()
+	var api_key = custom_api._load_api_key_from_file()
+	var base_url = custom_api._load_base_url_from_file()
+	
+	if api_key.is_empty():
+		# If no key in file, check ProjectSettings
+		if ProjectSettings.has_setting(CONFIG_CUSTOM_API_KEY):
+			api_key = ProjectSettings.get_setting(CONFIG_CUSTOM_API_KEY)
+			
+			# If we have a key in ProjectSettings, save it to file
+			if not api_key.is_empty():
+				custom_api._save_api_key_to_file(api_key)
+	else:
+		# If we found a key in file, update ProjectSettings
+		ProjectSettings.set_setting(CONFIG_CUSTOM_API_KEY, api_key)
+	
+	if base_url.is_empty():
+		# If no URL in file, check ProjectSettings
+		if ProjectSettings.has_setting(CONFIG_CUSTOM_BASE_URL):
+			base_url = ProjectSettings.get_setting(CONFIG_CUSTOM_BASE_URL)
+			
+			# If we have a URL in ProjectSettings, save it to file
+			if not base_url.is_empty():
+				custom_api._save_base_url_to_file(base_url)
+	else:
+		# If we found a URL in file, update ProjectSettings
+		ProjectSettings.set_setting(CONFIG_CUSTOM_BASE_URL, base_url)
+	
+	# Add settings if they don't exist
+	_add_project_setting(CONFIG_CUSTOM_API_KEY, api_key, TYPE_STRING, PROPERTY_HINT_NONE, "Custom API key - Get it from your API provider")
+	_add_project_setting(CONFIG_CUSTOM_BASE_URL, base_url, TYPE_STRING, PROPERTY_HINT_NONE, "Custom API base URL - Example: https://api.openai.com/v1")
 
 func _exit_tree() -> void:
 	remove_control_from_bottom_panel(_hub_dock)
@@ -148,7 +188,7 @@ func get_available_llm_providers() -> Array[Dictionary]:
 	providers.append({
 		"id":"jan_api",
 		"name":"Jan",
-		"description":"Locally run open source LLMs models (requires Jan’s OpenAI‑compatible server)"
+		"description":"Locally run open source LLMs models (requires Jan's OpenAI‑compatible server)"
 	})
 
 	# Add Gemini provider
@@ -156,6 +196,13 @@ func get_available_llm_providers() -> Array[Dictionary]:
 		"id": "gemini_api",
 		"name": "Gemini",
 		"description": "Google Gemini LLM (requires API key)"
+	})
+	
+	# Add Custom API provider
+	providers.append({
+		"id": "custom_api",
+		"name": "Custom API",
+		"description": "Custom OpenAI-compatible API endpoint (requires API key and custom URL)"
 	})
 
 	

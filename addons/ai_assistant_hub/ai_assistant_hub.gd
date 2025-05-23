@@ -24,6 +24,7 @@ var _tab_bar:TabBar
 var _model_names:Array[String] = []
 var _models_llm: LLMInterface
 var _current_provider_id: String = ""
+var _api_key_label: Label  # Will be found at runtime
 
 
 func _tab_changed(tab_index: int) -> void:
@@ -44,6 +45,13 @@ func initialize(plugin:EditorPlugin) -> void:
 	_models_llm = _plugin.new_llm_provider()
 	
 	await ready
+	
+	# Find the API key label in the OpenRouter container
+	for child in openrouter_key_container.get_children():
+		if child is Label:
+			_api_key_label = child
+			break
+	
 	url_txt.text = ProjectSettings.get_setting(AIHubPlugin.CONFIG_BASE_URL)
 	api_class_txt.text = ProjectSettings.get_setting(AIHubPlugin.CONFIG_LLM_API)
 	_current_provider_id = api_class_txt.text
@@ -53,6 +61,13 @@ func initialize(plugin:EditorPlugin) -> void:
 		_load_openrouter_api_key()
 	elif ProjectSettings.has_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY):
 		openrouter_api_key.text = ProjectSettings.get_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY)
+	
+	# Load Custom API settings - base URL goes to url_txt for now
+	if _current_provider_id == "custom_api":
+		var custom_api = load("res://addons/ai_assistant_hub/llm_apis/custom_api.gd").new()
+		var base_url = custom_api.get_base_url()
+		if not base_url.is_empty():
+			url_txt.text = base_url
 	
 	# Initialize LLM provider dropdown
 	_initialize_llm_provider_options()
@@ -87,21 +102,56 @@ func _initialize_llm_provider_options() -> void:
 func _update_provider_ui() -> void:
 	var provider_id = _current_provider_id
 	
-	# Ollama needs URL, OpenRouter needs API key
+	# Hide all containers first
+	url_txt.visible = false
+	openrouter_key_container.visible = false
+	
+	# Show appropriate UI based on provider
 	if provider_id == "ollama_api":
 		url_label.text = "Server URL"
 		url_txt.placeholder_text = "Example: http://127.0.0.1:11434"
 		url_txt.tooltip_text = "URL of the host running the LLM.\n\nDefault value uses Ollama's default port."
 		url_txt.visible = true
-		openrouter_key_container.visible = false
 	elif provider_id == "openrouter_api":
 		url_label.text = "OpenRouter Settings"
-		url_txt.visible = false
+		# Update the label for OpenRouter
+		if _api_key_label:
+			_api_key_label.text = "OpenRouter API Key:"
+		openrouter_api_key.placeholder_text = "Enter your OpenRouter API key"
+		openrouter_api_key.tooltip_text = "Get your API key from https://openrouter.ai/keys"
 		openrouter_key_container.visible = true
+	elif provider_id == "custom_api":
+		url_label.text = "Custom API Settings"
+		# Use url_txt for Custom API base URL
+		url_txt.visible = true
+		url_txt.placeholder_text = "Custom API Base URL (e.g., https://api.openai.com/v1)"
+		url_txt.tooltip_text = "Enter the base URL for your custom API endpoint"
+		
+		# Reuse the OpenRouter key container for Custom API key
+		if _api_key_label:
+			_api_key_label.text = "Custom API Key:"
+		openrouter_api_key.placeholder_text = "Enter your Custom API key"
+		openrouter_api_key.tooltip_text = "API key for your custom endpoint"
+		openrouter_key_container.visible = true
+		
+		# Load existing Custom API key
+		var custom_api = load("res://addons/ai_assistant_hub/llm_apis/custom_api.gd").new()
+		var api_key = custom_api._get_api_key()
+		if not api_key.is_empty():
+			openrouter_api_key.text = api_key
+	elif provider_id == "jan_api":
+		url_label.text = "Server URL"
+		url_txt.placeholder_text = "Example: http://127.0.0.1:1337"
+		url_txt.tooltip_text = "URL of the Jan API server."
+		url_txt.visible = true
+	elif provider_id == "gemini_api":
+		url_label.text = "Gemini Settings"
+		url_txt.visible = true
+		url_txt.placeholder_text = "Note: Configure API key in Project Settings"
+		url_txt.tooltip_text = "Gemini uses a fixed endpoint. Configure your API key in Project Settings -> Plugins -> ai_assistant_hub -> gemini_api_key"
 	else:
 		url_label.text = "Server URL"
 		url_txt.visible = true
-		openrouter_key_container.visible = false
 
 
 func _on_settings_changed(_x) -> void:
@@ -111,6 +161,17 @@ func _on_settings_changed(_x) -> void:
 	# Save OpenRouter API key
 	if _current_provider_id == "openrouter_api":
 		ProjectSettings.set_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY, openrouter_api_key.text)
+		var openrouter_api = load("res://addons/ai_assistant_hub/llm_apis/openrouter_api.gd").new()
+		openrouter_api.save_api_key(openrouter_api_key.text)
+	
+	# Save Custom API settings
+	if _current_provider_id == "custom_api":
+		ProjectSettings.set_setting(AIHubPlugin.CONFIG_CUSTOM_BASE_URL, url_txt.text)
+		ProjectSettings.set_setting(AIHubPlugin.CONFIG_CUSTOM_API_KEY, openrouter_api_key.text)
+		var custom_api = load("res://addons/ai_assistant_hub/llm_apis/custom_api.gd").new()
+		custom_api.save_base_url(url_txt.text)
+		custom_api.save_api_key(openrouter_api_key.text)
+	
 	ProjectSettings.save()
 
 
@@ -206,6 +267,25 @@ func _on_llm_provider_option_item_selected(index: int) -> void:
 		# Load API key for OpenRouter if we're switching to it
 		if provider_id == "openrouter_api":
 			_load_openrouter_api_key()
+		elif provider_id == "custom_api":
+			# Load Custom API settings
+			var custom_api = load("res://addons/ai_assistant_hub/llm_apis/custom_api.gd").new()
+			var base_url = custom_api.get_base_url()
+			if not base_url.is_empty():
+				url_txt.text = base_url
+			else:
+				url_txt.text = ""
+			# Load Custom API key
+			var api_key = custom_api._get_api_key()
+			if not api_key.is_empty():
+				openrouter_api_key.text = api_key
+			else:
+				openrouter_api_key.text = ""
+		elif provider_id == "ollama_api" or provider_id == "jan_api":
+			# Restore base URL for these providers
+			url_txt.text = ProjectSettings.get_setting(AIHubPlugin.CONFIG_BASE_URL)
+			# Clear the API key field for providers that don't use it
+			openrouter_api_key.text = ""
 			
 		_update_provider_ui()
 		_on_api_load_btn_pressed()
@@ -219,13 +299,17 @@ func _load_openrouter_api_key() -> void:
 		openrouter_api_key.text = api_key
 
 
-# Called when OpenRouter API key changes
+# Called when OpenRouter API key changes (now also handles Custom API key)
 func _on_openrouter_api_key_text_changed(new_text: String) -> void:
-	# Save to ProjectSettings for backward compatibility
-	ProjectSettings.set_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY, new_text)
-	
-	# Save to file using the OpenRouter API class
 	if _current_provider_id == "openrouter_api":
+		# Save OpenRouter API key
+		ProjectSettings.set_setting(AIHubPlugin.CONFIG_OPENROUTER_API_KEY, new_text)
 		var openrouter_api = load("res://addons/ai_assistant_hub/llm_apis/openrouter_api.gd").new()
 		openrouter_api.save_api_key(new_text)
-	ProjectSettings.save()
+	elif _current_provider_id == "custom_api":
+		# Save Custom API key
+		ProjectSettings.set_setting(AIHubPlugin.CONFIG_CUSTOM_API_KEY, new_text)
+		var custom_api = load("res://addons/ai_assistant_hub/llm_apis/custom_api.gd").new()
+		custom_api.save_api_key(new_text)
+	
+	ProjectSettings.save() 

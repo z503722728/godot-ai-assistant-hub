@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AIAssistantResource" load_steps=8 format=3 uid="uid://bgcwhyqpl71l2"]
+
+[ext_resource type="Script" uid="uid://7dtyjol61hyn" path="res://addons/ai_assistant_hub/quick_prompts/ai_quick_prompt_resource.gd" id="1_6tahh"]
+[ext_resource type="Resource" uid="uid://8ut2h386rbmi" path="res://examples/quick_prompts/ai_qp_read_code.tres" id="2_l6led"]
+[ext_resource type="Resource" uid="uid://bsn3twnsske1o" path="res://examples/quick_prompts/ai_qp_write_code.tres" id="3_f5l52"]
+[ext_resource type="Resource" uid="uid://cpjaosxq42axt" path="res://examples/quick_prompts/ai_qp_describe_code.tres" id="4_pvtg2"]
+[ext_resource type="Script" uid="uid://dhguj0u3fo20f" path="res://addons/ai_assistant_hub/assistants/ai_assistant_resource.gd" id="5_5s7xd"]
+[ext_resource type="Texture2D" uid="uid://qjvopjqelt0m" path="res://addons/ai_assistant_hub/graphics/icons/linear_32_3dmsicons.png" id="6_v4squ"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j5gdl"]
+atlas = ExtResource("6_v4squ")
+region = Rect2(320, 480, 32, 32)
+
+[resource]
+script = ExtResource("5_5s7xd")
+type_name = "Coder Jr"
+type_icon = SubResource("AtlasTexture_j5gdl")
+ai_model = "gemini-2.5-pro-preview-05-06"
+ai_description = "You are a Godot AI assistant. You respond in a concise manner and you can write high quality GDScript code for Godot 4. You are chatting with an experienced developer and every code request you receive is for GDScript."
+use_custom_temperature = false
+custom_temperature = 0.5
+quick_prompts = Array[ExtResource("1_6tahh")]([ExtResource("2_l6led"), ExtResource("3_f5l52"), ExtResource("4_pvtg2")])

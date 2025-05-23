@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://dn7xoyvs56oy6"]
 
-[ext_resource type="Script" path="res://addons/ai_assistant_hub/chat_history_editor.gd" id="1_n0n5m"]
+[ext_resource type="Script" uid="uid://bok3xq3hnert1" path="res://addons/ai_assistant_hub/chat_history_editor.gd" id="1_n0n5m"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dxmwm"]
 bg_color = Color(0.21, 0.24, 0.29, 1)

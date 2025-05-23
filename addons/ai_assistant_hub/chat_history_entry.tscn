@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://b1mpesm8gt63t"]
 
-[ext_resource type="Script" path="res://addons/ai_assistant_hub/chat_history_entry.gd" id="1_rl68l"]
+[ext_resource type="Script" uid="uid://ckkrsapgpyryi" path="res://addons/ai_assistant_hub/chat_history_entry.gd" id="1_rl68l"]
 
 [node name="ChatHistoryEntry" type="HBoxContainer"]
 auto_translate_mode = 1

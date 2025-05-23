@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://w1f4dho35qy2"]
 
-[ext_resource type="Script" path="res://addons/ai_assistant_hub/ai_assistant_hub.gd" id="1_x668t"]
+[ext_resource type="Script" uid="uid://p2uprqpn4mll" path="res://addons/ai_assistant_hub/ai_assistant_hub.gd" id="1_x668t"]
 
 [node name="AIAssistantHub" type="Control"]
 custom_minimum_size = Vector2(0, 260)
